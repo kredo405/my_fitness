@@ -1,0 +1,8 @@
+import {json,body,db} from '../lib/server.js';
+export default async function handler(req,res){if(req.method!=='POST')return json(res,405,{error:'Method not allowed'});if(!process.env.TELEGRAM_BOT_TOKEN)return json(res,500,{ok:false});const secret=process.env.TELEGRAM_WEBHOOK_SECRET;if(!secret||req.headers['x-telegram-bot-api-secret-token']!==secret)return json(res,401,{ok:false});
+ const update=await body(req);const msg=update.message;if(!msg?.from?.id||!msg.text)return json(res,200,{ok:true});const id=msg.chat.id,text=msg.text.trim(),first=msg.from.first_name||'друг',app=(process.env.APP_URL||'').replace(/\/$/,'');
+ let reply=`Привет, ${first}! Я Forma — персональный ИИ-тренер. Открой приложение, чтобы настроить цель, вести дневник и получать план тренировок.`;
+ if(text==='/help')reply='Команды: /start — открыть тренера, /today — краткий план на сегодня.';
+ if(text==='/today'){let p={};try{p=(await db(`profiles?telegram_id=eq.${id}&select=*`))[0]||{}}catch{}reply=`План на сегодня: ${p.goal==='fat_loss'?'умеренная силовая или прогулка':'умеренная тренировка на всё тело'}. Начни с разминки 5–8 минут. Открой Mini App, чтобы посмотреть упражнения и записать самочувствие.`}
+ const payload={chat_id:id,text:reply};if(app)payload.reply_markup={inline_keyboard:[[{text:'Открыть Forma',web_app:{url:app}}]]};try{const sent=await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(7000)});if(!sent.ok)console.error('telegram send:',sent.status)}catch(e){console.error('telegram send:',e.message)}return json(res,200,{ok:true});
+}
