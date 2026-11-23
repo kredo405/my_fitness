@@ -15,23 +15,26 @@
 
 Тренировочный план пока базовый шаблон, а не медицинская оценка или автоматически периодизируемая программа. При боли/ограничениях остановись и уточни безопасную нагрузку у специалиста. ИИ-функция требует отдельный ключ провайдера; без ключа чат честно покажет подсказку настройки.
 
-## Развёртывание
+## Развёртывание через импорт GitHub в Vercel
 
 1. Создай проект Supabase, открой SQL Editor и выполни `supabase/schema.sql`. Возьми Project URL и `service_role` key из API settings. Никогда не помещай service role key в frontend.
 2. Создай бота у `@BotFather` командой `/newbot` и скопируй токен.
-3. Импортируй эту папку как проект Vercel. Настрой переменные окружения для Production и Preview:
+3. В Vercel нажми **Add New → Project → Import Git Repository** и выбери `kredo405/my_fitness`. Для Production Branch укажи `main`, Root Directory оставь `./`. Исходный код бери из репозитория — загружать папку вручную не нужно.
+4. В форме **Configure Project** добавь переменные окружения для **Production** до первого деплоя:
 
-   - `APP_URL` — HTTPS адрес деплоя, например `https://forma-example.vercel.app`.
-   - `TELEGRAM_BOT_TOKEN` — токен бота.
-   - `TELEGRAM_WEBHOOK_SECRET` — случайная строка 32+ символа (латиница/цифры/`_`/`-`).
-   - `SUPABASE_URL` — Project URL.
+   - `APP_URL` — HTTPS production-домен проекта Vercel целиком, например `https://my-fitness.vercel.app`. Используй именно домен, который Vercel назначит проекту.
+   - `TELEGRAM_BOT_TOKEN` — токен из BotFather.
+   - `TELEGRAM_WEBHOOK_SECRET` — случайная строка длиной от 32 символов из латинских букв, цифр, `_` и `-`.
+   - `SUPABASE_URL` — Project URL Supabase.
    - `SUPABASE_SERVICE_ROLE_KEY` — секретный service role key.
-   - `OPENAI_API_KEY` — необязательно, ключ модели для ИИ.
+   - `OPENAI_API_KEY` — необязательно; ключ модели для ИИ.
    - `OPENAI_MODEL` — необязательно; по умолчанию `gpt-4o-mini`.
-   - `OPENAI_BASE_URL` — необязательно; URL совместимого с OpenAI Responses API endpoint, по умолчанию `https://api.openai.com/v1/responses`.
+   - `OPENAI_BASE_URL` — необязательно; по умолчанию `https://api.openai.com/v1/responses`.
 
-4. Выполни deployment. Проверь, что `APP_URL` совпадает с production URL.
-5. Подключи webhook, подставив URL приложения и секрет (запрос выполнить из терминала, не коммитить URL с токеном):
+   Если домен проекта ещё неизвестен на этапе ввода переменных, сначала задеплой проект, затем добавь или поправь `APP_URL` в **Project Settings → Environment Variables** и повторно задеплой Production. Не добавляй секреты в файлы репозитория.
+
+5. Нажми **Deploy**. После подключения GitHub последующие коммиты и push в `main` будут автоматически запускать production-деплой. Ветки кроме `main` Vercel будет собирать как Preview Deployments.
+6. После первого Production Deploy подключи Telegram webhook, подставив production-домен и значения секретов. Команду выполни локально в PowerShell; не добавляй токен в репозиторий:
 
    ```powershell
    $app = "https://YOUR-APP.vercel.app"
@@ -49,5 +52,5 @@
 
 ## Переменные окружения
 
-Секреты не включены в репозиторий. Установи их через Vercel Project → Settings → Environment Variables и повторно задеплой после изменения. Запросы к ИИ оплачиваются отдельно по тарифу выбранного провайдера; используй лимиты расходов в кабинете API.
+Добавляй секреты в форме импорта/настройки проекта Vercel либо в **Project Settings → Environment Variables**. Для текущего запуска достаточно Production scope; не коммить `.env` и не вставляй service role key в код. Запросы к ИИ оплачиваются отдельно по тарифу выбранного провайдера; используй лимиты расходов в кабинете API.
 
