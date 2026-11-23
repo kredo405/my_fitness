@@ -8,7 +8,7 @@
 - Профиль: цель, опыт, рост/вес, ограничения и доступное оборудование.
 - План тренировки на сегодня с адаптацией стартового набора упражнений и отметкой выполнения.
 - Дневник самочувствия, стресса, сна, веса, воды, питания и заметок; история последних записей.
-- ИИ-чат с короткой историей беседы, передающий профиль и последние записи выбранной модели через OpenAI Responses API.
+- ИИ-чат с короткой историей беседы через OpenRouter; профиль и последние записи передаются выбранной модели.
 - Лимит ИИ-чата — до 30 запросов на пользователя в день.
 - API не отдаёт ключ Supabase браузеру. RLS включён; таблицы недоступны ролям anon/authenticated, сервер проверяет Telegram initData.
 - Для ответа ИИ профиль и последние дневниковые записи передаются выбранному AI-провайдеру. Данные хранятся в Supabase, удалить их можно кнопкой в профиле.
@@ -22,19 +22,19 @@
 3. В Vercel нажми **Add New → Project → Import Git Repository** и выбери `kredo405/my_fitness`. Для Production Branch укажи `main`, Root Directory оставь `./`. Исходный код бери из репозитория — загружать папку вручную не нужно.
 4. В форме **Configure Project** добавь переменные окружения для **Production** до первого деплоя:
 
-   - `APP_URL` — HTTPS production-домен проекта Vercel целиком, например `https://my-fitness.vercel.app`. Используй именно домен, который Vercel назначит проекту.
    - `TELEGRAM_BOT_TOKEN` — токен из BotFather.
    - `TELEGRAM_WEBHOOK_SECRET` — случайная строка длиной от 32 символов из латинских букв, цифр, `_` и `-`.
    - `SUPABASE_URL` — Project URL Supabase.
    - `SUPABASE_SERVICE_ROLE_KEY` — секретный service role key.
-   - `OPENAI_API_KEY` — необязательно; ключ модели для ИИ.
-   - `OPENAI_MODEL` — необязательно; по умолчанию `gpt-4o-mini`.
-   - `OPENAI_BASE_URL` — необязательно; по умолчанию `https://api.openai.com/v1/responses`.
+   - `OPENROUTER_API_KEY` — необязательно; ключ из кабинета OpenRouter для ИИ-чата.
+   - `OPENROUTER_MODEL` — необязательно; slug модели из каталога OpenRouter, по умолчанию `openai/gpt-4o-mini`.
+   - `OPENROUTER_BASE_URL` — необязательно; по умолчанию `https://openrouter.ai/api/v1/chat/completions`.
 
-   Если домен проекта ещё неизвестен на этапе ввода переменных, сначала задеплой проект, затем добавь или поправь `APP_URL` в **Project Settings → Environment Variables** и повторно задеплой Production. Не добавляй секреты в файлы репозитория.
+   `APP_URL` пока пропусти: домен проекта станет известен после первого деплоя. Не добавляй секреты в файлы репозитория.
 
 5. Нажми **Deploy**. После подключения GitHub последующие коммиты и push в `main` будут автоматически запускать production-деплой. Ветки кроме `main` Vercel будет собирать как Preview Deployments.
-6. После первого Production Deploy подключи Telegram webhook, подставив production-домен и значения секретов. Команду выполни локально в PowerShell; не добавляй токен в репозиторий:
+6. После первого Production Deploy скопируй его домен, например `https://my-fitness.vercel.app`. Добавь `APP_URL` с этим значением в **Project Settings → Environment Variables** для **Production** и повторно задеплой Production, чтобы переменная попала в серверную функцию.
+7. После повторного Production Deploy подключи Telegram webhook, подставив production-домен и значения секретов. Команду выполни локально в PowerShell; не добавляй токен в репозиторий:
 
    ```powershell
    $app = "https://YOUR-APP.vercel.app"
@@ -44,7 +44,7 @@
    Invoke-RestMethod -Method Post -Uri "https://api.telegram.org/bot$token/setWebhook" -ContentType "application/json" -Body $body
    ```
 
-6. В Telegram открой бота, отправь `/start` и запусти Mini App. Сначала заполни профиль.
+8. В Telegram открой бота, отправь `/start` и запусти Mini App. Сначала заполни профиль.
 
 ## Локальный просмотр
 
@@ -52,5 +52,4 @@
 
 ## Переменные окружения
 
-Добавляй секреты в форме импорта/настройки проекта Vercel либо в **Project Settings → Environment Variables**. Для текущего запуска достаточно Production scope; не коммить `.env` и не вставляй service role key в код. Запросы к ИИ оплачиваются отдельно по тарифу выбранного провайдера; используй лимиты расходов в кабинете API.
-
+Добавляй секреты в форме импорта/настройки проекта Vercel либо в **Project Settings → Environment Variables**. `APP_URL` вводится после первого деплоя; остальные переменные можно внести при импорте. Для текущего запуска достаточно Production scope; не коммить `.env` и не вставляй service role key в код. Запросы к моделям оплачиваются по тарифу OpenRouter; настрой лимиты расходов в его кабинете.
