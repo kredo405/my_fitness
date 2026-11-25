@@ -17,7 +17,7 @@
 
 ## Развёртывание через импорт GitHub в Vercel
 
-1. Создай проект Supabase, открой SQL Editor и выполни `supabase/schema.sql`. Возьми Project URL и `service_role` key из API settings. Никогда не помещай service role key в frontend.
+1. Создай проект Supabase, открой SQL Editor и выполни `supabase/schema.sql`. Этот скрипт можно запускать повторно для добавления недостающих полей в существующие таблицы. Возьми Project URL и `service_role` key из API settings. Никогда не помещай service role key в frontend.
 2. Создай бота у `@BotFather` командой `/newbot` и скопируй токен.
 3. В Vercel нажми **Add New → Project → Import Git Repository** и выбери `kredo405/my_fitness`. Для Production Branch укажи `main`, Root Directory оставь `./`. Исходный код бери из репозитория — загружать папку вручную не нужно.
 4. В форме **Configure Project** добавь переменные окружения для **Production** до первого деплоя:

@@ -14,6 +14,10 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Keep the schema upgradeable if an earlier version of this table already exists.
+alter table public.profiles add column if not exists age smallint check (age between 16 and 100);
+alter table public.profiles add column if not exists sessions_per_week smallint check (sessions_per_week between 1 and 14);
+alter table public.profiles add column if not exists dietary_preferences text not null default '';
 create table if not exists public.daily_logs (
   id bigint generated always as identity primary key,
   telegram_id bigint not null references public.profiles(telegram_id) on delete cascade,
@@ -29,6 +33,8 @@ create table if not exists public.daily_logs (
   updated_at timestamptz not null default now(),
   unique (telegram_id, log_date)
 );
+alter table public.daily_logs add column if not exists calories_kcal integer check (calories_kcal between 0 and 10000);
+alter table public.daily_logs add column if not exists protein_g numeric check (protein_g between 0 and 1000);
 create table if not exists public.workouts (
   id bigint generated always as identity primary key,
   telegram_id bigint not null references public.profiles(telegram_id) on delete cascade,
