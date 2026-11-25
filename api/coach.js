@@ -1,7 +1,12 @@
 import {auth,json,body,db} from '../lib/server.js';
 export default async function handler(req,res){if(req.method!=='POST')return json(res,405,{error:'Method not allowed'});const user=auth(req);if(!user)return json(res,401,{error:'Telegram authentication required'});
  try{
-  const {message}=await body(req), prompt=String(message||'').trim().slice(0,1500);if(!prompt)return json(res,400,{error:'Напиши вопрос.'});
+  const input=await body(req);
+  if(input.kind==='history'){
+   const messages=await db(`coach_messages?telegram_id=eq.${user.id}&select=role,content,created_at&order=created_at.asc&limit=20`);
+   return json(res,200,{messages});
+  }
+  const prompt=String(input.message||'').trim().slice(0,1500);if(!prompt)return json(res,400,{error:'Напиши вопрос.'});
   const start=new Date();start.setUTCHours(0,0,0,0);
   const [profiles,logs,history,usage]=await Promise.all([db(`profiles?telegram_id=eq.${user.id}&select=*`),db(`daily_logs?telegram_id=eq.${user.id}&select=*&order=log_date.desc&limit=7`),db(`coach_messages?telegram_id=eq.${user.id}&select=role,content&order=created_at.desc&limit=8`),db(`coach_messages?telegram_id=eq.${user.id}&role=eq.user&created_at=gte.${encodeURIComponent(start.toISOString())}&select=id&limit=30`)]), profile=profiles[0]||{};
   if(usage.length>=30)return json(res,429,{error:'На сегодня лимит запросов тренеру достигнут. Попробуй снова завтра.'});
