@@ -15,7 +15,14 @@ export default async function handler(req,res){
  }
  try{
   if(req.method==='GET'){
-   const profiles=await db(`profiles?telegram_id=eq.${user.id}&select=*`), logs=await db(`daily_logs?telegram_id=eq.${user.id}&log_date=eq.${today(req)}&select=*`), recent=await db(`daily_logs?telegram_id=eq.${user.id}&select=*&order=log_date.desc&limit=14`), workouts=await db(`workouts?telegram_id=eq.${user.id}&select=*&order=completed_at.desc&limit=10`), wearableCheckins=await db(`wearable_checkins?telegram_id=eq.${user.id}&select=context,metrics,captured_date,created_at&order=created_at.desc&limit=10`);
+   const profiles=await db(`profiles?telegram_id=eq.${user.id}&select=*`);
+   const [logs,recent,workouts,wearableCheckins]=await Promise.all([
+    optionalRead('today log',`daily_logs?telegram_id=eq.${user.id}&log_date=eq.${today(req)}&select=*`),
+    optionalRead('recent logs',`daily_logs?telegram_id=eq.${user.id}&select=*&order=log_date.desc&limit=14`),
+    optionalRead('workouts',`workouts?telegram_id=eq.${user.id}&select=*&order=completed_at.desc&limit=10`),
+    optionalRead('wearable check-ins',`wearable_checkins?telegram_id=eq.${user.id}&select=context,metrics,captured_date,created_at&order=created_at.desc&limit=10`)
+   ]);
+   console.info('profile loaded:',{telegram_id:user.id,found:Boolean(profiles[0])});
    return json(res,200,{user:{id:user.id,first_name:user.first_name},profile:profiles[0]||null,today:logs[0]||null,recent,workouts,wearableCheckins});
   }
   const input=await body(req), kind=input.kind;
@@ -45,6 +52,7 @@ export default async function handler(req,res){
   return json(res,400,{error:'Unknown action'});
  }catch(e){console.error('profile API error:',{status:e.status,code:e.code,message:e.message,hint:e.hint});return json(res,e.status===401||e.status===403?503:500,{error:profileError(e)})}
 }
+async function optionalRead(label,path){try{return await db(path)}catch(error){console.warn('optional profile data unavailable:',{label,status:error.status,code:error.code});return []}}
 function bounded(v,min,max){if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):null}
 function profileError(e){
  if(!process.env.SUPABASE_URL||!process.env.SUPABASE_SERVICE_ROLE_KEY)return 'Серверная БД не настроена. Проверь SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в Vercel.';
