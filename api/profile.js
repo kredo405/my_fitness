@@ -1,7 +1,18 @@
 import {auth,json,body,db,today} from '../lib/server.js';
 export default async function handler(req,res){
  if(req.method!=='GET'&&req.method!=='POST')return json(res,405,{error:'Method not allowed'});
- const user=auth(req);if(!user)return json(res,401,{error:'Открой приложение через Telegram.'});
+ const user=auth(req);
+ if(!user){
+  // Safe one-shot diagnostic: confirm which Telegram bot token the deployed function actually has.
+  if(req.headers['x-telegram-init-data']&&process.env.TELEGRAM_BOT_TOKEN){
+   try{
+    const check=await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getMe`,{signal:AbortSignal.timeout(2500)});
+    const result=await check.json();
+    console.warn('Telegram bot token check:',{httpStatus:check.status,ok:result.ok===true,botId:result.result?.id||null,username:result.result?.username||null});
+   }catch(error){console.warn('Telegram bot token check failed:',{errorName:error?.name||'Error'})}
+  }
+  return json(res,401,{error:'Открой приложение через Telegram.'});
+ }
  try{
   if(req.method==='GET'){
    const profiles=await db(`profiles?telegram_id=eq.${user.id}&select=*`), logs=await db(`daily_logs?telegram_id=eq.${user.id}&log_date=eq.${today(req)}&select=*`), recent=await db(`daily_logs?telegram_id=eq.${user.id}&select=*&order=log_date.desc&limit=14`), workouts=await db(`workouts?telegram_id=eq.${user.id}&select=*&order=created_at.desc&limit=10`);
