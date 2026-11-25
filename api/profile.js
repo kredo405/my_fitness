@@ -32,8 +32,11 @@ export default async function handler(req,res){
    const rows=await db('daily_logs?on_conflict=telegram_id,log_date',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(safe)});return json(res,200,{today:rows[0]});
   }
   if(kind==='water'){
-   const old=await db(`daily_logs?telegram_id=eq.${user.id}&log_date=eq.${today(req)}&select=water_ml`), water=Math.min(10000,(old[0]?.water_ml||0)+250);
-   const rows=await db('daily_logs?on_conflict=telegram_id,log_date',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({telegram_id:user.id,log_date:today(req),water_ml:water,updated_at:new Date().toISOString()})});return json(res,200,{today:rows[0]});
+   const date=today(req), old=await db(`daily_logs?telegram_id=eq.${user.id}&log_date=eq.${date}&select=id,water_ml`), water=Math.min(10000,(old[0]?.water_ml||0)+250);
+   const rows=old[0]
+    ? await db(`daily_logs?id=eq.${old[0].id}`,{method:'PATCH',body:JSON.stringify({water_ml:water,updated_at:new Date().toISOString()})})
+    : await db('daily_logs',{method:'POST',body:JSON.stringify({telegram_id:user.id,log_date:date,water_ml:water})});
+   return json(res,200,{today:rows[0]});
   }
   if(kind==='workout'){
    const rows=await db('workouts',{method:'POST',body:JSON.stringify({telegram_id:user.id,title:String(input.title||'Тренировка').slice(0,100),details:input.details||{},completed_at:new Date().toISOString()})});return json(res,200,{workout:rows[0]});
