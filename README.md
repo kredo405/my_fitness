@@ -26,7 +26,7 @@
    - `TELEGRAM_WEBHOOK_SECRET` — случайная строка длиной от 32 символов из латинских букв, цифр, `_` и `-`.
    - `SUPABASE_URL` — Project URL Supabase.
    - `SUPABASE_SERVICE_ROLE_KEY` — секретный service role key.
-   - `OPENROUTER_API_KEY` — необязательно; ключ из кабинета OpenRouter для ИИ-чата.
+   - `OPENROUTER_API_KEY` — необязательно; ключ из кабинета OpenRouter для ИИ-чата и адаптивных планов.
    - `OPENROUTER_MODEL` — необязательно; slug модели из каталога OpenRouter, по умолчанию `openai/gpt-4o-mini`.
    - `OPENROUTER_BASE_URL` — необязательно; по умолчанию `https://openrouter.ai/api/v1/chat/completions`.
 
