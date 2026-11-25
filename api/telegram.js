@@ -62,6 +62,9 @@ async function handlePhoto(msg,userId,chatId,token,app){
   await send(chatId,'Сначала открой Forma и сохрани профиль. После этого я смогу привязать показания часов к твоим данным.',token,app);
   return;
  }
+ const since=encodeURIComponent(new Date(Date.now()-24*60*60*1000).toISOString());
+ const recentUploads=await db('wearable_checkins?telegram_id=eq.'+userId+'&created_at=gte.'+since+'&select=id&limit=6');
+ if(recentUploads.length>=6){await send(chatId,'На сегодня доступно до 6 разборов скриншотов за последние 24 часа. Завтра можно отправить новые данные.',token,app);return}
  if(!process.env.OPENROUTER_API_KEY){
   await send(chatId,'Распознавание скриншотов требует OPENROUTER_API_KEY. Добавь ключ в Vercel и отправь снимок повторно.',token,app);
   return;
