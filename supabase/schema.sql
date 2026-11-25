@@ -42,6 +42,15 @@ create table if not exists public.workouts (
   details jsonb not null default '{}'::jsonb,
   completed_at timestamptz not null default now()
 );
+create table if not exists public.daily_plans (
+  telegram_id bigint not null references public.profiles(telegram_id) on delete cascade,
+  plan_date date not null,
+  plan jsonb not null,
+  generation_count smallint not null default 1 check (generation_count between 1 and 3),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (telegram_id, plan_date)
+);
 create table if not exists public.coach_messages (
   id bigint generated always as identity primary key,
   telegram_id bigint not null references public.profiles(telegram_id) on delete cascade,
@@ -56,7 +65,8 @@ alter table public.profiles enable row level security;
 alter table public.daily_logs enable row level security;
 alter table public.workouts enable row level security;
 alter table public.coach_messages enable row level security;
+alter table public.daily_plans enable row level security;
 -- No anon/authenticated policies: all access goes through authenticated Vercel functions using the service key.
-revoke all on public.profiles,public.daily_logs,public.workouts,public.coach_messages from anon,authenticated;
-grant all on public.profiles,public.daily_logs,public.workouts,public.coach_messages to service_role;
+revoke all on public.profiles,public.daily_logs,public.workouts,public.coach_messages,public.daily_plans from anon,authenticated;
+grant all on public.profiles,public.daily_logs,public.workouts,public.coach_messages,public.daily_plans to service_role;
 grant usage,select on all sequences in schema public to service_role;
