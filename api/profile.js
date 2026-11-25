@@ -15,11 +15,12 @@ export default async function handler(req,res){
  }
  try{
   if(req.method==='GET'){
-   const profiles=await db(`profiles?telegram_id=eq.${user.id}&select=*`), logs=await db(`daily_logs?telegram_id=eq.${user.id}&log_date=eq.${today(req)}&select=*`), recent=await db(`daily_logs?telegram_id=eq.${user.id}&select=*&order=log_date.desc&limit=14`), workouts=await db(`workouts?telegram_id=eq.${user.id}&select=*&order=completed_at.desc&limit=10`);
-   return json(res,200,{user:{id:user.id,first_name:user.first_name},profile:profiles[0]||null,today:logs[0]||null,recent,workouts});
+   const profiles=await db(`profiles?telegram_id=eq.${user.id}&select=*`), logs=await db(`daily_logs?telegram_id=eq.${user.id}&log_date=eq.${today(req)}&select=*`), recent=await db(`daily_logs?telegram_id=eq.${user.id}&select=*&order=log_date.desc&limit=14`), workouts=await db(`workouts?telegram_id=eq.${user.id}&select=*&order=completed_at.desc&limit=10`), wearableCheckins=await db(`wearable_checkins?telegram_id=eq.${user.id}&select=context,metrics,captured_date,created_at&order=created_at.desc&limit=10`);
+   return json(res,200,{user:{id:user.id,first_name:user.first_name},profile:profiles[0]||null,today:logs[0]||null,recent,workouts,wearableCheckins});
   }
   const input=await body(req), kind=input.kind;
   if(kind==='delete'){
+   try{await db(`pending_checkins?telegram_id=eq.${user.id}`,{method:'DELETE'})}catch{}
    await db(`profiles?telegram_id=eq.${user.id}`,{method:'DELETE'});return json(res,200,{deleted:true});
   }
   if(kind==='profile'){
