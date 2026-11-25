@@ -42,6 +42,21 @@ create table if not exists public.workouts (
   details jsonb not null default '{}'::jsonb,
   completed_at timestamptz not null default now()
 );
+create table if not exists public.pending_checkins (
+  telegram_id bigint primary key,
+  context text not null check (context in ('morning','pre_workout','post_workout','general')),
+  requested_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+create table if not exists public.wearable_checkins (
+  id bigint generated always as identity primary key,
+  telegram_id bigint not null references public.profiles(telegram_id) on delete cascade,
+  context text not null check (context in ('morning','pre_workout','post_workout','general')),
+  metrics jsonb not null default '{}'::jsonb,
+  captured_date date,
+  created_at timestamptz not null default now()
+);
+create index if not exists wearable_checkins_user_time_idx on public.wearable_checkins(telegram_id,created_at desc);
 create table if not exists public.daily_plans (
   telegram_id bigint not null references public.profiles(telegram_id) on delete cascade,
   plan_date date not null,
@@ -66,7 +81,9 @@ alter table public.daily_logs enable row level security;
 alter table public.workouts enable row level security;
 alter table public.coach_messages enable row level security;
 alter table public.daily_plans enable row level security;
+alter table public.pending_checkins enable row level security;
+alter table public.wearable_checkins enable row level security;
 -- No anon/authenticated policies: all access goes through authenticated Vercel functions using the service key.
-revoke all on public.profiles,public.daily_logs,public.workouts,public.coach_messages,public.daily_plans from anon,authenticated;
-grant all on public.profiles,public.daily_logs,public.workouts,public.coach_messages,public.daily_plans to service_role;
+revoke all on public.profiles,public.daily_logs,public.workouts,public.coach_messages,public.daily_plans,public.pending_checkins,public.wearable_checkins from anon,authenticated;
+grant all on public.profiles,public.daily_logs,public.workouts,public.coach_messages,public.daily_plans,public.pending_checkins,public.wearable_checkins to service_role;
 grant usage,select on all sequences in schema public to service_role;
